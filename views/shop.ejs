@@ -1,0 +1,60 @@
+
+<%- include("partials/header", { pageTitle: "Shop" }) %>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+  <div class="mb-8">
+    <p class="text-xs font-bold uppercase tracking-widest text-teal-800">The collection</p>
+    <h1 class="text-3xl sm:text-4xl font-black mt-2">Shop all products</h1>
+    <p class="text-stone-500 mt-2"><%= products.length %> product(s) found</p>
+  </div>
+
+  <form action="/shop" method="GET" class="bg-white rounded-2xl border border-stone-200 p-4 mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <input name="q" value="<%= search %>" maxlength="100" placeholder="Search products..." class="border rounded-xl px-4 py-3 w-full">
+    <select name="category" class="border rounded-xl px-4 py-3 w-full">
+      <option value="">All categories</option>
+      <% categories.forEach(cat => { %>
+        <option value="<%= cat.category %>" <%= category === cat.category ? "selected" : "" %>><%= cat.category %></option>
+      <% }) %>
+    </select>
+    <select name="sort" class="border rounded-xl px-4 py-3 w-full">
+      <option value="newest" <%= sort === "newest" ? "selected" : "" %>>Newest first</option>
+      <option value="price_low" <%= sort === "price_low" ? "selected" : "" %>>Price: low to high</option>
+      <option value="price_high" <%= sort === "price_high" ? "selected" : "" %>>Price: high to low</option>
+      <option value="name" <%= sort === "name" ? "selected" : "" %>>Name A–Z</option>
+    </select>
+    <button class="bg-teal-800 hover:bg-teal-900 text-white rounded-xl px-5 py-3 font-bold">Filter products</button>
+  </form>
+
+  <% if (products.length === 0) { %>
+    <div class="bg-white border rounded-2xl p-12 text-center">
+      <h2 class="text-xl font-bold">No products found</h2>
+      <p class="text-stone-500 mt-2">Try another search or category.</p>
+      <a href="/shop" class="inline-block mt-5 text-teal-800 font-bold underline">Clear filters</a>
+    </div>
+  <% } else { %>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+      <% products.forEach(product => { %>
+        <article class="group">
+          <a href="/product/<%= product.id %>" class="block overflow-hidden rounded-2xl bg-stone-100">
+            <img src="<%= product.image || 'https://placehold.co/600x750?text=Fashion' %>" alt="<%= product.name %>" class="product-image w-full group-hover:scale-105 transition-transform duration-300" loading="lazy">
+          </a>
+          <div class="pt-3">
+            <p class="text-xs text-stone-500"><%= product.category %></p>
+            <a href="/product/<%= product.id %>" class="font-bold block mt-1 hover:text-teal-800"><%= product.name %></a>
+            <div class="flex flex-wrap gap-2 mt-2 items-center">
+              <span class="font-black"><%= formatMoney(product.price) %></span>
+              <% if (product.compare_at && product.compare_at > product.price) { %>
+                <span class="text-xs line-through text-stone-400"><%= formatMoney(product.compare_at) %></span>
+              <% } %>
+            </div>
+            <p class="text-xs mt-2 <%= product.stock > 0 ? 'text-teal-800' : 'text-red-600' %>">
+              <%= product.stock > 0 ? "In stock" : "Out of stock" %>
+            </p>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<%- include("partials/footer") %>
