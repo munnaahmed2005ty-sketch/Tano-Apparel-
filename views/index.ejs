@@ -1,0 +1,113 @@
+
+<%- include("partials/header", { pageTitle: "Home" }) %>
+
+<section class="bg-teal-950 text-white overflow-hidden">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-20 grid md:grid-cols-2 gap-10 items-center">
+    <div>
+      <p class="uppercase tracking-[0.25em] text-orange-300 text-xs font-bold mb-5">Your everyday wardrobe</p>
+      <h1 class="text-4xl sm:text-6xl font-black leading-tight">
+        Wear your<br><span class="text-orange-300">own story.</span>
+      </h1>
+      <p class="text-stone-300 mt-6 max-w-lg leading-7">
+        Fresh fits, versatile essentials and comfortable styles made for your everyday life.
+      </p>
+      <div class="flex flex-wrap gap-3 mt-8">
+        <a href="/shop" class="bg-orange-400 hover:bg-orange-300 text-stone-950 font-bold px-6 py-3 rounded-xl">Shop collection</a>
+        <a href="/shop?sort=newest" class="border border-white/40 hover:bg-white/10 font-bold px-6 py-3 rounded-xl">New arrivals</a>
+      </div>
+      <p class="text-xs text-stone-400 mt-6">Cash on delivery available · Prices in Bangladeshi taka</p>
+    </div>
+    <div class="relative">
+      <img
+        src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1100&q=90"
+        alt="Contemporary fashion collection"
+        class="w-full h-80 sm:h-[440px] object-cover rounded-3xl"
+      >
+      <div class="absolute bottom-4 left-4 bg-white text-stone-900 rounded-2xl p-4 shadow-lg">
+        <p class="text-xs text-stone-500">Find your next favourite</p>
+        <p class="font-black text-lg">Style starts here.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 py-14">
+  <div class="flex items-end justify-between gap-4 mb-7">
+    <div>
+      <p class="text-xs font-bold uppercase tracking-widest text-teal-800">Explore the store</p>
+      <h2 class="text-2xl sm:text-3xl font-black mt-2">Shop by category</h2>
+    </div>
+    <a href="/shop" class="text-sm font-bold text-teal-800 hover:underline">All products →</a>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <% const categoryImages = {
+      "T-Shirts": "photo-1521572163474-6864f9cf17ab",
+      "Shirts": "photo-1598033129183-c4f50c736f10",
+      "Hoodies": "photo-1556821840-3a63f95609a7",
+      "Jackets": "photo-1529139574466-a303027c1d8b",
+      "Polo": "photo-1625910513413-5fc3c0a6a5b7"
+    }; %>
+    <% if (categories.length === 0) { %>
+      <a href="/shop" class="rounded-2xl bg-white border p-6 font-bold">Explore all products →</a>
+    <% } %>
+    <% categories.forEach(cat => { %>
+      <a href="/shop?category=<%= encodeURIComponent(cat.category) %>" class="group relative rounded-2xl overflow-hidden bg-stone-200 min-h-48">
+        <img
+          src="https://images.unsplash.com/<%= categoryImages[cat.category] || 'photo-1521572163474-6864f9cf17ab' %>?auto=format&fit=crop&w=700&q=80"
+          alt="<%= cat.category %>"
+          class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+        >
+        <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent"></div>
+        <div class="absolute bottom-4 left-4 right-4 text-white">
+          <h3 class="font-black text-lg"><%= cat.category %></h3>
+          <p class="text-xs text-stone-200"><%= cat.count %> styles</p>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+</section>
+
+<section class="bg-white py-14">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="flex items-end justify-between mb-7 gap-4">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-widest text-teal-800">Handpicked for you</p>
+        <h2 class="text-2xl sm:text-3xl font-black mt-2">Featured products</h2>
+      </div>
+      <a href="/shop" class="text-sm font-bold text-teal-800 hover:underline">View all →</a>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <% products.forEach(product => { %>
+        <article class="group">
+          <a href="/product/<%= product.id %>" class="block rounded-2xl overflow-hidden bg-stone-100">
+            <img src="<%= product.image || 'https://placehold.co/600x750?text=Fashion' %>" alt="<%= product.name %>" class="product-image w-full group-hover:scale-105 transition-transform duration-300" loading="lazy">
+          </a>
+          <div class="pt-3">
+            <p class="text-xs text-stone-500"><%= product.category %></p>
+            <a href="/product/<%= product.id %>" class="font-bold mt-1 block hover:text-teal-800"><%= product.name %></a>
+            <div class="flex flex-wrap gap-2 items-center mt-2">
+              <span class="font-black"><%= formatMoney(product.price) %></span>
+              <% if (product.compare_at && product.compare_at > product.price) { %>
+                <span class="text-xs text-stone-400 line-through"><%= formatMoney(product.compare_at) %></span>
+              <% } %>
+            </div>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+  <div class="bg-orange-100 rounded-3xl p-8 sm:p-12 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+    <div>
+      <p class="text-xs uppercase tracking-widest font-bold text-orange-800">Shopping made simple</p>
+      <h2 class="text-2xl sm:text-3xl font-black mt-2">Your next favourite outfit is waiting.</h2>
+      <p class="mt-3 text-stone-700">Choose your fit, place your order and get it delivered.</p>
+    </div>
+    <a href="/shop" class="bg-stone-950 text-white rounded-xl px-6 py-3 font-bold text-center">Browse the collection</a>
+  </div>
+</section>
+
+<%- include("partials/footer") %>
