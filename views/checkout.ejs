@@ -1,0 +1,93 @@
+
+<%- include("partials/header", { pageTitle: "Checkout" }) %>
+
+<section class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+  <h1 class="text-3xl sm:text-4xl font-black">Checkout</h1>
+  <p class="text-stone-500 mt-2">Enter your delivery information and select a payment method.</p>
+
+  <div class="grid lg:grid-cols-[1fr_360px] gap-8 mt-8 items-start">
+    <form action="/checkout" method="POST" class="bg-white border rounded-2xl p-5 sm:p-8 space-y-6">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <section>
+        <h2 class="text-xl font-black mb-5">Delivery information</h2>
+        <div class="space-y-4">
+          <div>
+            <label for="name" class="block text-sm font-bold mb-2">Full name *</label>
+            <input id="name" name="name" type="text" maxlength="100" autocomplete="name" required minlength="2" class="w-full border rounded-xl p-3" placeholder="Your full name">
+          </div>
+          <div>
+            <label for="phone" class="block text-sm font-bold mb-2">Bangladeshi phone number *</label>
+            <input id="phone" name="phone" type="tel" maxlength="20" autocomplete="tel" required pattern="(\+?8801|01)[3-9][0-9]{8}" class="w-full border rounded-xl p-3" placeholder="01XXXXXXXXX">
+            <p class="text-xs text-stone-500 mt-1">Use a valid number beginning with 01 or +8801.</p>
+          </div>
+          <div>
+            <label for="address" class="block text-sm font-bold mb-2">Full delivery address *</label>
+            <textarea id="address" name="address" rows="3" maxlength="500" autocomplete="street-address" required minlength="8" class="w-full border rounded-xl p-3" placeholder="House, road, area, landmark..."></textarea>
+          </div>
+          <div>
+            <label for="city" class="block text-sm font-bold mb-2">City / District *</label>
+            <input id="city" name="city" maxlength="100" required minlength="2" class="w-full border rounded-xl p-3" placeholder="e.g. Dhaka, Munshiganj">
+          </div>
+          <div>
+            <label for="notes" class="block text-sm font-bold mb-2">Order notes (optional)</label>
+            <textarea id="notes" name="notes" rows="2" maxlength="500" class="w-full border rounded-xl p-3" placeholder="Delivery instructions"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="border-t pt-6">
+        <h2 class="text-xl font-black mb-4">Payment method</h2>
+        <div class="space-y-3">
+          <label class="flex items-start gap-3 p-4 border rounded-xl cursor-pointer hover:bg-stone-50">
+            <input type="radio" name="payment_method" value="cod" checked required class="mt-1">
+            <span><span class="font-bold block">Cash on Delivery</span><span class="text-sm text-stone-500">Pay when your order arrives.</span></span>
+          </label>
+          <label class="flex items-start gap-3 p-4 border rounded-xl cursor-pointer hover:bg-stone-50">
+            <input type="radio" name="payment_method" value="bkash" class="mt-1">
+            <span><span class="font-bold block text-pink-700">bKash manual payment</span><span class="text-sm text-stone-500">Send the order total to <strong><%= bkashNumber || "the store's configured bKash number" %></strong>, then enter your TrxID below.</span></span>
+          </label>
+          <label class="flex items-start gap-3 p-4 border rounded-xl cursor-pointer hover:bg-stone-50">
+            <input type="radio" name="payment_method" value="nagad" class="mt-1">
+            <span><span class="font-bold block text-orange-700">Nagad manual payment</span><span class="text-sm text-stone-500">Send the order total to <strong><%= nagadNumber || "the store's configured Nagad number" %></strong>, then enter your TrxID below.</span></span>
+          </label>
+        </div>
+        <div class="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900">
+          Only pay to a number confirmed by the store. Never share your PIN or OTP. Mobile payments remain unverified until the admin checks the transaction.
+        </div>
+        <div class="mt-4">
+          <label for="trx_id" class="block text-sm font-bold mb-2">Transaction ID (TrxID, for bKash/Nagad only)</label>
+          <input id="trx_id" name="trx_id" maxlength="100" pattern="[A-Za-z0-9-]{5,100}" class="w-full border rounded-xl p-3" placeholder="Enter your payment TrxID">
+          <p class="text-xs text-stone-500 mt-1">Leave blank for Cash on Delivery.</p>
+        </div>
+      </section>
+
+      <button type="submit" class="w-full bg-teal-800 hover:bg-teal-900 text-white rounded-xl py-4 font-bold">Place order · <%= formatMoney(cart.total) %></button>
+      <p class="text-xs text-center text-stone-500">By placing your order, you confirm that your delivery information is correct.</p>
+    </form>
+
+    <aside class="bg-white border rounded-2xl p-5 sm:p-6 lg:sticky lg:top-24">
+      <h2 class="text-xl font-black">Your order</h2>
+      <div class="mt-5 space-y-4">
+        <% cart.items.forEach(item => { %>
+          <div class="flex gap-3 items-start">
+            <img src="<%= item.product.image || 'https://placehold.co/100x125?text=Fashion' %>" alt="<%= item.product.name %>" class="w-16 h-20 rounded-lg object-cover bg-stone-100">
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-sm"><%= item.product.name %></p>
+              <p class="text-xs text-stone-500 mt-1"><%= item.size %> / <%= item.color %> · Qty <%= item.qty %></p>
+              <p class="font-bold text-sm mt-1"><%= formatMoney(item.lineTotal) %></p>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+      <div class="border-t mt-5 pt-5 space-y-3 text-sm">
+        <div class="flex justify-between"><span class="text-stone-500">Subtotal</span><span><%= formatMoney(cart.subtotal) %></span></div>
+        <div class="flex justify-between"><span class="text-stone-500">Shipping</span><span><%= cart.shippingFee === 0 ? "Free" : formatMoney(cart.shippingFee) %></span></div>
+        <div class="border-t pt-4 flex justify-between font-black text-lg"><span>Total</span><span><%= formatMoney(cart.total) %></span></div>
+      </div>
+      <a href="/cart" class="block mt-5 text-center text-teal-800 text-sm font-bold hover:underline">Edit cart</a>
+    </aside>
+  </div>
+</section>
+
+<%- include("partials/footer") %>
