@@ -1,0 +1,82 @@
+
+<%- include("partials/header", { pageTitle: "Shopping Cart" }) %>
+
+<section class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+  <h1 class="text-3xl sm:text-4xl font-black">Your shopping cart</h1>
+  <p class="text-stone-500 mt-2">Review your items before checkout.</p>
+
+  <% if (cart.items.length === 0) { %>
+    <div class="mt-8 bg-white border rounded-3xl p-10 sm:p-16 text-center">
+      <div class="text-5xl">🛍️</div>
+      <h2 class="text-2xl font-black mt-5">Your cart is empty</h2>
+      <p class="text-stone-500 mt-2">Find something you love in our collection.</p>
+      <a href="/shop" class="inline-block mt-6 bg-teal-800 text-white px-6 py-3 rounded-xl font-bold">Start shopping</a>
+    </div>
+  <% } else { %>
+    <div class="grid lg:grid-cols-[1fr_340px] gap-8 mt-8 items-start">
+      <div class="space-y-4">
+        <% cart.items.forEach(item => { %>
+          <article class="bg-white border border-stone-200 rounded-2xl p-4 sm:p-5 grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-4">
+            <a href="/product/<%= item.product.id %>">
+              <img src="<%= item.product.image || 'https://placehold.co/400x500?text=Fashion' %>" alt="<%= item.product.name %>" class="w-full aspect-[4/5] object-cover rounded-xl bg-stone-100">
+            </a>
+            <div class="min-w-0">
+              <div class="flex justify-between gap-3">
+                <div>
+                  <a href="/product/<%= item.product.id %>" class="font-bold hover:text-teal-800"><%= item.product.name %></a>
+                  <p class="text-sm text-stone-500 mt-1">Size: <%= item.size %> · Color: <%= item.color %></p>
+                  <p class="font-black mt-2"><%= formatMoney(item.product.price) %></p>
+                </div>
+                <form action="/cart/remove" method="POST">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="product_id" value="<%= item.product.id %>">
+                  <input type="hidden" name="size" value="<%= item.size %>">
+                  <input type="hidden" name="color" value="<%= item.color %>">
+                  <button class="text-xs text-red-600 font-semibold hover:underline" aria-label="Remove item">Remove</button>
+                </form>
+              </div>
+              <div class="flex flex-wrap items-end justify-between gap-3 mt-4">
+                <form action="/cart/update" method="POST" class="flex items-end gap-2">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="product_id" value="<%= item.product.id %>">
+                  <input type="hidden" name="size" value="<%= item.size %>">
+                  <input type="hidden" name="color" value="<%= item.color %>">
+                  <label class="text-xs text-stone-500">
+                    Qty
+                    <input type="number" name="quantity" min="1" max="<%= Math.min(20, item.product.stock) %>" value="<%= item.qty %>" required class="block mt-1 border rounded-lg p-2 w-20">
+                  </label>
+                  <button class="border border-stone-300 px-3 py-2 rounded-lg text-sm font-bold hover:bg-stone-100">Update</button>
+                </form>
+                <p class="font-black text-lg"><%= formatMoney(item.lineTotal) %></p>
+              </div>
+            </div>
+          </article>
+        <% }) %>
+        <a href="/shop" class="inline-block text-sm text-teal-800 font-bold hover:underline">← Continue shopping</a>
+      </div>
+
+      <aside class="bg-white border border-stone-200 rounded-2xl p-6 lg:sticky lg:top-24">
+        <h2 class="text-xl font-black">Order summary</h2>
+        <div class="flex justify-between gap-4 mt-6 text-sm">
+          <span class="text-stone-500">Subtotal</span>
+          <span class="font-bold"><%= formatMoney(cart.subtotal) %></span>
+        </div>
+        <div class="flex justify-between gap-4 mt-4 text-sm">
+          <span class="text-stone-500">Shipping</span>
+          <span class="font-bold"><%= cart.shippingFee === 0 ? "Free" : formatMoney(cart.shippingFee) %></span>
+        </div>
+        <% if (cart.subtotal > 0 && cart.subtotal < 3000) { %>
+          <p class="text-xs text-stone-500 mt-2">Free shipping threshold is ৳<%= Number(3000).toLocaleString("en-BD") %>.</p>
+        <% } %>
+        <div class="border-t mt-5 pt-5 flex justify-between gap-4">
+          <span class="font-bold">Total</span>
+          <span class="text-xl font-black"><%= formatMoney(cart.total) %></span>
+        </div>
+        <a href="/checkout" class="block text-center mt-6 bg-teal-800 hover:bg-teal-900 text-white rounded-xl py-4 font-bold">Proceed to checkout</a>
+        <p class="text-xs text-center text-stone-500 mt-3">Final stock and price checks happen at checkout.</p>
+      </aside>
+    </div>
+  <% } %>
+</section>
+
+<%- include("partials/footer") %>
