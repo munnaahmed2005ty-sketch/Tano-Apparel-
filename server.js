@@ -25,18 +25,20 @@ if (!process.env.SESSION_SECRET ||
   throw new Error("SESSION_SECRET must be at least 32 characters.");
 }
 
-if (!process.env.ADMIN_USERNAME ||
-    !process.env.ADMIN_PASSWORD_HASH ||
-    !/^\$2[aby]\$/.test(process.env.ADMIN_PASSWORD_HASH)) {
+if (
+  !process.env.ADMIN_USERNAME ||
+  !process.env.ADMIN_PASSWORD ||
+  process.env.ADMIN_PASSWORD.length < 12
+) {
   throw new Error(
-    "Set ADMIN_USERNAME and a valid bcrypt ADMIN_PASSWORD_HASH in .env."
+    "Set ADMIN_USERNAME and ADMIN_PASSWORD (at least 12 characters)."
   );
 }
 
-const STORE_NAME = process.env.STORE_NAME || "Dhaka Threads";
-const STORE_PHONE = process.env.STORE_PHONE || "";
-const BKASH_NUMBER = process.env.BKASH_NUMBER || "";
-const NAGAD_NUMBER = process.env.NAGAD_NUMBER || "";
+const STORE_NAME = process.env.STORE_NAME || "Tano Apparel";
+const STORE_PHONE = process.env.STORE_PHONE || "01882571164";
+const BKASH_NUMBER = process.env.BKASH_NUMBER || "01882571164";
+const NAGAD_NUMBER = process.env.NAGAD_NUMBER || "01882571164";
 const SHIPPING_FEE = Math.max(
   0, Number(process.env.SHIPPING_FEE) || 80
 );
@@ -729,10 +731,14 @@ app.post("/admin/login", loginLimiter, async (req, res, next) => {
       ? req.body.password.slice(0, 200) : "";
 
     const usernameOk = username === process.env.ADMIN_USERNAME;
-    const passwordOk = await bcrypt.compare(
-      password,
-      process.env.ADMIN_PASSWORD_HASH
-    );
+
+const passwordOk =
+  typeof process.env.ADMIN_PASSWORD === "string" &&
+  password.length === process.env.ADMIN_PASSWORD.length &&
+  crypto.timingSafeEqual(
+    Buffer.from(password),
+    Buffer.from(process.env.ADMIN_PASSWORD)
+  );
 
     if (!usernameOk || !passwordOk) {
       notice(req, "Invalid username or password.", "error");
