@@ -1,0 +1,280 @@
+
+<%- include("../partials/header", { pageTitle: "Admin Dashboard" }) %>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <p class="text-xs uppercase tracking-widest font-bold text-teal-800">Store management</p>
+      <h1 class="text-3xl sm:text-4xl font-black mt-2">Admin dashboard</h1>
+      <p class="text-stone-500 text-sm mt-2">Manage inventory, review orders and verify manual payments.</p>
+    </div>
+    <div class="flex gap-3">
+      <a href="/" class="border rounded-xl px-4 py-3 text-sm font-bold hover:bg-white">View store</a>
+      <form action="/admin/logout" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="bg-stone-950 text-white rounded-xl px-4 py-3 text-sm font-bold">Log out</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+    <div class="bg-white border rounded-2xl p-5">
+      <p class="text-sm text-stone-500">Total products</p>
+      <p class="text-3xl font-black mt-2"><%= products.length %></p>
+    </div>
+    <div class="bg-white border rounded-2xl p-5">
+      <p class="text-sm text-stone-500">Active products</p>
+      <p class="text-3xl font-black mt-2"><%= products.filter(p => p.active).length %></p>
+    </div>
+    <div class="bg-white border rounded-2xl p-5">
+      <p class="text-sm text-stone-500">Orders loaded</p>
+      <p class="text-3xl font-black mt-2"><%= orders.length %></p>
+    </div>
+    <div class="bg-white border rounded-2xl p-5">
+      <p class="text-sm text-stone-500">Awaiting verification</p>
+      <p class="text-3xl font-black mt-2"><%= orders.filter(o => o.payment_method !== "cod" && o.payment_status === "Unverified").length %></p>
+    </div>
+  </div>
+
+  <div class="grid xl:grid-cols-[390px_1fr] gap-8 mt-10 items-start">
+    <section id="product-form" class="bg-white border rounded-2xl p-5 sm:p-6">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-xl font-black"><%= editingProduct ? "Edit product" : "Add a product" %></h2>
+          <p class="text-sm text-stone-500 mt-1"><%= editingProduct ? "Update the product information." : "Create a new storefront listing." %></p>
+        </div>
+        <% if (editingProduct) { %>
+          <a href="/admin#product-form" class="text-sm text-teal-800 font-bold">Cancel</a>
+        <% } %>
+      </div>
+
+      <form action="<%= editingProduct ? '/admin/products/' + editingProduct.id + '/edit' : '/admin/products' %>" method="POST" class="space-y-4 mt-6">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div>
+          <label for="name" class="block text-sm font-bold mb-1">Product name *</label>
+          <input id="name" name="name" required maxlength="120" value="<%= editingProduct ? editingProduct.name : '' %>" class="w-full border rounded-xl p-3">
+        </div>
+
+        <div>
+          <label for="category" class="block text-sm font-bold mb-1">Category *</label>
+          <input id="category" name="category" required maxlength="60" value="<%= editingProduct ? editingProduct.category : '' %>" placeholder="T-Shirts, Shirts, Hoodies..." class="w-full border rounded-xl p-3">
+        </div>
+
+        <div>
+          <label for="description" class="block text-sm font-bold mb-1">Description *</label>
+          <textarea id="description" name="description" required maxlength="2000" rows="4" class="w-full border rounded-xl p-3"><%= editingProduct ? editingProduct.description : '' %></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="price" class="block text-sm font-bold mb-1">Selling price (৳) *</label>
+            <input id="price" name="price" type="number" min="0" max="10000000" step="0.01" required value="<%= editingProduct ? editingProduct.price : '' %>" class="w-full border rounded-xl p-3">
+          </div>
+          <div>
+            <label for="compare_at" class="block text-sm font-bold mb-1">Original price (৳)</label>
+            <input id="compare_at" name="compare_at" type="number" min="0" max="10000000" step="0.01" value="<%= editingProduct && editingProduct.compare_at !== null ? editingProduct.compare_at : '' %>" class="w-full border rounded-xl p-3">
+          </div>
+        </div>
+
+        <div>
+          <label for="stock" class="block text-sm font-bold mb-1">Stock quantity *</label>
+          <input id="stock" name="stock" type="number" min="0" max="1000000" step="1" required value="<%= editingProduct ? editingProduct.stock : 0 %>" class="w-full border rounded-xl p-3">
+        </div>
+
+        <div>
+          <label for="image" class="block text-sm font-bold mb-1">Product image URL</label>
+          <input id="image" name="image" type="url" maxlength="1000" value="<%= editingProduct ? editingProduct.image : '' %>" placeholder="https://example.com/product.jpg" class="w-full border rounded-xl p-3">
+          <p class="text-xs text-stone-500 mt-1">Use a direct HTTP/HTTPS image URL.</p>
+        </div>
+
+        <div>
+          <label for="sizes" class="block text-sm font-bold mb-1">Sizes *</label>
+          <input id="sizes" name="sizes" required maxlength="150" value="<%= editingProduct ? editingProduct.sizes : 'S,M,L,XL,XXL' %>" class="w-full border rounded-xl p-3">
+          <p class="text-xs text-stone-500 mt-1">Separate sizes with commas, e.g. S,M,L,XL.</p>
+        </div>
+
+        <div>
+          <label for="colors" class="block text-sm font-bold mb-1">Colors *</label>
+          <input id="colors" name="colors" required maxlength="200" value="<%= editingProduct ? editingProduct.colors : 'Black,White,Navy' %>" class="w-full border rounded-xl p-3">
+          <p class="text-xs text-stone-500 mt-1">Separate colors with commas, e.g. Black,White,Olive.</p>
+        </div>
+
+        <label class="flex items-center gap-3 text-sm font-bold">
+          <input type="checkbox" name="active" <%= !editingProduct || editingProduct.active ? "checked" : "" %> class="w-4 h-4">
+          Visible in storefront
+        </label>
+
+        <button class="w-full bg-teal-800 hover:bg-teal-900 text-white rounded-xl p-3 font-bold">
+          <%= editingProduct ? "Save product changes" : "Create product" %>
+        </button>
+      </form>
+    </section>
+
+    <section class="min-w-0">
+      <div class="flex items-end justify-between mb-4">
+        <div>
+          <h2 class="text-2xl font-black">Product inventory</h2>
+          <p class="text-sm text-stone-500 mt-1">Edit a listing or remove it from the storefront.</p>
+        </div>
+      </div>
+
+      <div class="bg-white border rounded-2xl overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead class="bg-stone-100 text-stone-600">
+            <tr>
+              <th class="p-3">Product</th>
+              <th class="p-3">Price</th>
+              <th class="p-3">Stock</th>
+              <th class="p-3">Visibility</th>
+              <th class="p-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y">
+            <% products.forEach(product => { %>
+              <tr>
+                <td class="p-3 min-w-48">
+                  <div class="flex items-center gap-3">
+                    <img src="<%= product.image || 'https://placehold.co/80x100?text=Item' %>" alt="" class="w-12 h-14 rounded-lg object-cover bg-stone-100">
+                    <div>
+                      <p class="font-bold"><%= product.name %></p>
+                      <p class="text-xs text-stone-500">#<%= product.id %> · <%= product.category %></p>
+                    </div>
+                  </div>
+                </td>
+                <td class="p-3 whitespace-nowrap"><%= formatMoney(product.price) %></td>
+                <td class="p-3"><%= product.stock %></td>
+                <td class="p-3">
+                  <span class="rounded-full px-2 py-1 text-xs font-bold <%= product.active ? 'bg-teal-100 text-teal-800' : 'bg-stone-200 text-stone-600' %>">
+                    <%= product.active ? "Active" : "Hidden" %>
+                  </span>
+                </td>
+                <td class="p-3">
+                  <div class="flex items-center gap-3">
+                    <a href="/admin/products/<%= product.id %>/edit#product-form" class="text-teal-800 font-bold hover:underline">Edit</a>
+                    <% if (product.active) { %>
+                      <form action="/admin/products/<%= product.id %>/delete" method="POST" onsubmit="return confirm('Hide this product from the storefront?')">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="text-red-600 font-bold hover:underline">Hide</button>
+                      </form>
+                    <% } %>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+            <% if (!products.length) { %>
+              <tr><td colspan="5" class="p-8 text-center text-stone-500">No products yet.</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <section class="mt-12">
+    <div class="mb-5">
+      <h2 class="text-2xl sm:text-3xl font-black">Customer orders</h2>
+      <p class="text-stone-500 text-sm mt-2">Latest 200 orders. Check shipping details and verify mobile payments before marking them as verified.</p>
+    </div>
+
+    <% if (!orders.length) { %>
+      <div class="bg-white border rounded-2xl p-10 text-center text-stone-500">No orders have been placed yet.</div>
+    <% } else { %>
+      <div class="space-y-5">
+        <% orders.forEach(order => { %>
+          <article class="bg-white border border-stone-200 rounded-2xl overflow-hidden">
+            <div class="bg-stone-100 px-5 py-4 flex flex-wrap justify-between items-center gap-3">
+              <div>
+                <p class="font-black text-lg">Order #<%= order.id %></p>
+                <p class="text-xs text-stone-500 mt-1"><%= order.created_at %></p>
+              </div>
+              <div class="flex flex-wrap gap-2 text-xs font-bold">
+                <span class="rounded-full px-3 py-2 bg-white border"><%= order.status %></span>
+                <span class="rounded-full px-3 py-2 <%= order.payment_status === 'Verified' || order.payment_status === 'Not required' ? 'bg-teal-100 text-teal-800' : order.payment_status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-900' %>">
+                  <%= order.payment_status %>
+                </span>
+              </div>
+            </div>
+
+            <div class="p-5 grid lg:grid-cols-3 gap-6">
+              <div>
+                <h3 class="text-xs uppercase tracking-widest text-stone-500 font-bold mb-3">Customer & shipping</h3>
+                <p class="font-bold"><%= order.customer_name %></p>
+                <p class="mt-1 text-sm">
+                  <a class="text-teal-800 underline" href="tel:<%= order.phone %>"><%= order.phone %></a>
+                </p>
+                <p class="mt-2 text-sm leading-6 whitespace-pre-line"><%= order.address %><br><%= order.city %></p>
+                <% if (order.notes) { %>
+                  <div class="mt-3 text-sm bg-stone-50 border rounded-xl p-3">
+                    <p class="font-bold text-xs text-stone-500 mb-1">Customer notes</p>
+                    <p class="whitespace-pre-line"><%= order.notes %></p>
+                  </div>
+                <% } %>
+              </div>
+
+              <div>
+                <h3 class="text-xs uppercase tracking-widest text-stone-500 font-bold mb-3">Items ordered</h3>
+                <div class="space-y-3">
+                  <% order.items.forEach(item => { %>
+                    <div class="text-sm border-b pb-3 last:border-0">
+                      <p class="font-bold"><%= item.name %></p>
+                      <p class="text-stone-500 mt-1">Size: <%= item.size %> · Color: <%= item.color %> · Qty: <%= item.qty %></p>
+                      <p class="font-bold mt-1"><%= formatMoney(item.line_total) %></p>
+                    </div>
+                  <% }) %>
+                </div>
+                <div class="border-t mt-3 pt-3 space-y-2 text-sm">
+                  <div class="flex justify-between"><span>Subtotal</span><span><%= formatMoney(order.subtotal) %></span></div>
+                  <div class="flex justify-between"><span>Shipping</span><span><%= formatMoney(order.shipping_fee) %></span></div>
+                  <div class="flex justify-between font-black text-lg"><span>Total</span><span><%= formatMoney(order.total) %></span></div>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-xs uppercase tracking-widest text-stone-500 font-bold mb-3">Payment verification</h3>
+                <div class="border rounded-xl p-4">
+                  <p class="text-sm text-stone-500">Payment method</p>
+                  <p class="font-black mt-1"><%= order.payment_method === 'cod' ? 'Cash on Delivery' : order.payment_method.toUpperCase() %></p>
+                  <% if (order.payment_method !== "cod") { %>
+                    <p class="text-sm text-stone-500 mt-4">Submitted TrxID</p>
+                    <p class="font-mono font-bold break-all mt-1"><%= order.trx_id || "No TrxID submitted" %></p>
+                    <p class="text-xs text-amber-800 bg-amber-50 rounded-lg p-3 mt-3">
+                      Verify this transaction in the relevant provider's official merchant/account system before marking it verified.
+                    </p>
+                  <% } else { %>
+                    <p class="text-sm text-stone-500 mt-2">Customer pays on delivery.</p>
+                  <% } %>
+                </div>
+
+                <form action="/admin/orders/<%= order.id %>/status" method="POST" class="mt-4 space-y-3">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <div>
+                    <label for="status-<%= order.id %>" class="block text-xs font-bold mb-1">Order status</label>
+                    <select id="status-<%= order.id %>" name="status" class="w-full border rounded-lg p-2 text-sm">
+                      <% ["Pending","Confirmed","Processing","Shipped","Delivered","Cancelled"].forEach(status => { %>
+                        <option value="<%= status %>" <%= order.status === status ? "selected" : "" %>><%= status %></option>
+                      <% }) %>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="payment-<%= order.id %>" class="block text-xs font-bold mb-1">Payment status</label>
+                    <select id="payment-<%= order.id %>" name="payment_status" class="w-full border rounded-lg p-2 text-sm">
+                      <% (order.payment_method === "cod" ? ["Not required"] : ["Unverified","Verified","Rejected"]).forEach(status => { %>
+                        <option value="<%= status %>" <%= order.payment_status === status ? "selected" : "" %>><%= status %></option>
+                      <% }) %>
+                    </select>
+                  </div>
+
+                  <button class="w-full bg-teal-800 hover:bg-teal-900 text-white rounded-lg py-3 text-sm font-bold">Save order status</button>
+                </form>
+              </div>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+</section>
+
+<%- include("../partials/footer") %>
